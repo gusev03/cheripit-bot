@@ -19,6 +19,10 @@ A discord bot for the CheriPit Discord server
 - costco
 - voice chat
 
+2. Responds with a comment when a score from one of these games is shared:
+- Wordle
+- Connections
+
 ## Getting Started
 
 ### Prerequisites
