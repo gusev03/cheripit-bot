@@ -70,9 +70,9 @@ async def on_message(message):
         await message.channel.send(gif_to_send)
     
     # Wordle score check
-    elif scores := re.findall(r"(?i)wordle\s+\d+(?:,\d+)?\s+([0-6X])(?=/6\*?)", message.content):
+    elif wordle_scores := re.findall(r"(?i)wordle\s+\d+(?:,\d+)?\s+([0-6X])(?=/6\*?)", message.content):
         
-        score = scores[0]
+        score = wordle_scores[0]
 
         if score == "X":
             await message.channel.send("You lost! ;(")
@@ -90,5 +90,14 @@ async def on_message(message):
             await message.channel.send("That was a close one!")
         else:
             await message.channel.send(f"Are you sure that's a valid score?")
+    
+    elif connections_scores := re.findall(r"connections\s*(?:puzzle\s*)?#?\d+\s*((?:(?:🟨|🟩|🟦|🟪){4}\s*){1,6})", message.content, re.IGNORECASE):
+        rows = connections_scores[0].strip().split()
+        is_loss = len(rows) == 6 and len(set(rows[-1])) > 1  # Check if last row has different colors
+        
+        if is_loss:
+            await message.channel.send("You lost! Better luck tomorrow!")
+        else:
+            await message.channel.send("Nice job solving the Connections!")
 
 client.run(os.getenv("DISCORD_TOKEN"))
