@@ -23,6 +23,10 @@ A discord bot for the CheriPit Discord server
 - Wordle
 - Connections
 
+3. Daily Hamsterdle leaderboard announced every day at 5:00, 6:00, 7:00, 8:00, 9:00, 10:00, and 11:00 PM PST
+
+4. Can view Daily Hamsterdle leaderboard by typing `!hamsterdle`
+
 ## Getting Started
 
 ### Prerequisites
