@@ -86,23 +86,19 @@ async def on_ready():
 @tasks.loop(
     time=[
         datetime.time(hour=1, tzinfo=datetime.timezone.utc),  # 5 PM PT
-        datetime.time(hour=2, tzinfo=datetime.timezone.utc),  # 6 PM PT
-        datetime.time(hour=3, tzinfo=datetime.timezone.utc),  # 7 PM PT
-        datetime.time(hour=4, tzinfo=datetime.timezone.utc),  # 8 PM PT
-        datetime.time(hour=5, tzinfo=datetime.timezone.utc),  # 9 PM PT
         datetime.time(hour=6, tzinfo=datetime.timezone.utc),  # 10 PM PT
         datetime.time(hour=7, tzinfo=datetime.timezone.utc),  # 11 PM PT
     ]
 )
 async def send_daily_message():
-    general_channel = discord.utils.get(client.guilds[0].channels, name="general")
+    gamer_channel = discord.utils.get(client.guilds[0].channels, name="g✱mer-safe-space")
 
-    if general_channel:
+    if gamer_channel:
         embed, response = await get_daily_hamsterdle_leaderboard()
         if embed:
-            await general_channel.send(embed=embed)
+            await gamer_channel.send(embed=embed)
         if response:
-            await general_channel.send(response)
+            await gamer_channel.send(response)
 
 
 @client.event
