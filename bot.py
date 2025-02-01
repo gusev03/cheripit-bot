@@ -117,6 +117,7 @@ async def on_message(message):
             await message.channel.send(response)  # Error message
         return
 
+    """
     # Check for keywords and send GIFs
     if "fortnite" in content:
         gif_to_send = random.choice(gif_database["fortnite"])
@@ -157,9 +158,10 @@ async def on_message(message):
     elif any(x in content for x in ["peter", "griffin"]):
         gif_to_send = random.choice(gif_database["peter_griffin"])
         await message.channel.send(gif_to_send)
+    """
 
     # Wordle score check
-    elif wordle_scores := re.findall(
+    if wordle_scores := re.findall(
         r"(?i)wordle\s+\d+(?:,\d+)?\s+([0-6X])(?=/6\*?)", message.content
     ):
         score = wordle_scores[0]
