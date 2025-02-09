@@ -75,11 +75,6 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user}!")
-
-    general_channel = discord.utils.get(client.guilds[0].channels, name="general")
-    if general_channel:
-        await general_channel.send("Guess who just got an upgrade 👀")
-
     send_daily_message.start()
 
 
