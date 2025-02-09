@@ -55,9 +55,9 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
         hours_until_expiry = (7 - current_time.hour) % 24
 
         if hours_until_expiry == 0:
-            response += "The daily hamsterdle is over! Congratulations to the winners!"
+            response = "The daily hamsterdle is over! Congratulations to the winners!"
         else:
-            response += f"{hours_until_expiry} hours until the daily hamsterdle ends!"
+            response = f"{hours_until_expiry} hours until the daily hamsterdle ends!"
 
         return embed, response
     except Exception as e:
