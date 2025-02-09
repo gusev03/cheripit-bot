@@ -50,11 +50,6 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
         # Add timestamp
         embed.timestamp = datetime.datetime.now()
 
-        # Add response message
-        response = ""
-        if len(leaderboard) < 3:
-            response += "You suckers better play the daily hamsterdle! The leaderboard is empty! "
-
         # Calculate time until leaderboard expires (7:00 UTC)
         current_time = datetime.datetime.now(datetime.timezone.utc)
         hours_until_expiry = (7 - current_time.hour) % 24
