@@ -103,57 +103,27 @@ async def hamsterdle(interaction: discord.Interaction):
     else:
         await interaction.response.send_message(response)
 
+@client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
+async def gif(interaction: discord.Interaction, category: str = None):
+    if category is None:
+        # Get a random category and then a random gif from that category
+        category = random.choice(list(gif_database.keys()))
+        gif_to_send = random.choice(gif_database[category])
+        await interaction.response.send_message(gif_to_send)
+    else:
+        # Convert category to lowercase and replace spaces with underscores
+        category = category.lower().replace(' ', '_')
+        
+        if category in gif_database:
+            gif_to_send = random.choice(gif_database[category])
+            await interaction.response.send_message(gif_to_send)
+        else:
+            await interaction.response.send_message(f"No gifs for {category}!")
 
 @client.event
 async def on_message(message):
     if message.author == client.user:  # Ignore bot's own messages
         return
-
-    content = message.content.lower()
-
-
-    """
-    # Check for keywords and send GIFs
-    if "fortnite" in content:
-        gif_to_send = random.choice(gif_database["fortnite"])
-        await message.channel.send(gif_to_send)
-    elif "liar" in content:
-        gif_to_send = random.choice(gif_database["liars_bar"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["among us", "amongus"]):
-        gif_to_send = random.choice(gif_database["among_us"])
-        await message.channel.send(gif_to_send)
-    elif "lethal" in content:
-        gif_to_send = random.choice(gif_database["lethal"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["mine", "craft"]):
-        gif_to_send = random.choice(gif_database["minecraft"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["zelda", "link", "totk", "botw"]):
-        gif_to_send = random.choice(gif_database["zelda"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["joe", "biden"]):
-        gif_to_send = random.choice(gif_database["biden"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["donald", "trump"]):
-        gif_to_send = random.choice(gif_database["trump"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["brawl stars", "brawlstars"]):
-        gif_to_send = random.choice(gif_database["brawl_stars"])
-        await message.channel.send(gif_to_send)
-    elif "hamster" in content:
-        gif_to_send = random.choice(gif_database["hamster"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["vc", "voicechat", "voice chat"]):
-        gif_to_send = random.choice(gif_database["voice_chat"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["costco", "cost co"]):
-        gif_to_send = random.choice(gif_database["costco"])
-        await message.channel.send(gif_to_send)
-    elif any(x in content for x in ["peter", "griffin"]):
-        gif_to_send = random.choice(gif_database["peter_griffin"])
-        await message.channel.send(gif_to_send)
-    """
 
     # Wordle score check
     if wordle_scores := re.findall(
