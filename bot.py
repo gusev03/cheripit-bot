@@ -86,8 +86,7 @@ async def on_ready():
 @tasks.loop(
     time=[
         datetime.time(hour=1, tzinfo=datetime.timezone.utc),  # 5 PM PT
-        datetime.time(hour=6, tzinfo=datetime.timezone.utc),  # 10 PM PT
-        datetime.time(hour=7, tzinfo=datetime.timezone.utc),  # 11 PM PT
+        datetime.time(hour=7, tzinfo=datetime.timezone.utc)  # 11 PM PT
     ]
 )
 async def send_daily_message():
