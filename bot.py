@@ -7,13 +7,14 @@ import datetime
 from dotenv import load_dotenv
 from discord.ext import tasks
 import requests
+from discord.ext import commands
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = discord.Client(intents=intents)
+client = commands.Bot(command_prefix="!", intents=intents)
 
 AUTHORIZATION_HEADER = os.getenv("AUTHORIZATION_HEADER")
 UNITY_URL = os.getenv("UNITY_URL")
@@ -70,6 +71,11 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
 @client.event
 async def on_ready():
     print(f"Logged in as {client.user}!")
+    try:
+        synced = await client.tree.sync()
+        print(f"Synced {len(synced)} commands.")
+    except Exception as e:
+        print(f"Error syncing commands: {e}")
     send_daily_message.start()
 
 
@@ -89,6 +95,14 @@ async def send_daily_message():
         if response:
             await gamer_channel.send(response)
 
+@client.tree.command(name="hamsterdle", description="display the daily hamsterdle leaderboard")
+async def hamsterdle(interaction: discord.Interaction):
+    embed, response = await get_daily_hamsterdle_leaderboard()
+    if embed:
+        await interaction.response.send_message(embed=embed)
+    else:
+        await interaction.response.send_message(response)
+
 
 @client.event
 async def on_message(message):
@@ -97,14 +111,6 @@ async def on_message(message):
 
     content = message.content.lower()
 
-    # Command for daily hamsterdle leaderboard
-    if content == "!hamsterdle":
-        embed, response = await get_daily_hamsterdle_leaderboard()
-        if embed:
-            await message.channel.send(embed=embed)
-        else:
-            await message.channel.send(response)  # Error message
-        return
 
     """
     # Check for keywords and send GIFs
