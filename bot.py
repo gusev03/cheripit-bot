@@ -33,6 +33,10 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
         response = requests.get(UNITY_URL, headers=headers)
         leaderboard = response.json()["results"]
 
+        # If leaderboard is empty, don't generate an embed or response
+        if not leaderboard:
+            return None, None
+
         embed = discord.Embed(
             title="🐹 Daily Hamsterdle Leaderboard", color=0x964B00  # Brown
         )
@@ -105,7 +109,7 @@ async def hamsterdle(interaction: discord.Interaction):
 
 @client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
 async def gif(interaction: discord.Interaction, category: str = None):
-    if category is None:
+    if not category:
         # Get a random category and then a random gif from that category
         category = random.choice(list(gif_database.keys()))
         gif_to_send = random.choice(gif_database[category])
