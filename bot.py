@@ -104,8 +104,6 @@ async def hamsterdle(interaction: discord.Interaction):
     embed, response = await get_daily_hamsterdle_leaderboard()
     if embed:
         await interaction.response.send_message(embed=embed)
-    else:
-        await interaction.response.send_message(response)
 
 @client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
 async def gif(interaction: discord.Interaction, category: str = None):
