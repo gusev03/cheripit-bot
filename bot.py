@@ -41,13 +41,24 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
             title="🐹 Daily Hamsterdle Leaderboard", color=0x964B00  # Brown
         )
 
-        medals = ["🥇", "🥈", "🥉"]
+        ranks = [
+            "🥇",
+            "🥈",
+            "🥉",
+            "4th",
+            "5th",
+            "6th",
+            "7th",
+            "8th",
+            "9th",
+            "10th"
+        ]
 
         # Add fields for each top player
-        for rank, leader in enumerate(leaderboard[:3]):
+        for rank, leader in enumerate(leaderboard[:10]):
             name = re.sub(r"#\d+", "", leader["playerName"])
             embed.add_field(
-                name=medals[rank],
+                name=ranks[rank],
                 value=f"**{name}**\nScore: {leader['score']}",
                 inline=False,
             )
