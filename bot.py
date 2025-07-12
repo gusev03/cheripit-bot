@@ -286,17 +286,24 @@ async def on_message(message):
             await message.channel.send("Nice job solving the Connections!")
 
     # Strands score check
-    elif strands_scores := re.findall(
-        r"(?i)strands\s*#?\d+\s*\n?\"[^\"]+\"\s*\n?((?:(?:🔵|🟡)+\s*\n?)+)",
-        message.content,
-        re.MULTILINE | re.DOTALL,
-    ):
-        circles = strands_scores[0]
-        yellow_count = circles.count('🟡')
+    elif re.search(r"(?i)strands\s*#?\s*\d+", message.content):
+        # More robust extraction of circles from Strands scores
+        # Look for the theme in quotes (supporting various quote types)
+        theme_match = re.search(r'[""″‶「」『』]\s*[^""″‶「」『』\n]+\s*[""″‶「」『』]', message.content)
         
-        # Valid Strands score must have exactly 1 yellow
-        if yellow_count == 1:
-            await message.channel.send("Nice job solving today's strands!")
+        if theme_match:
+            # Extract everything after the theme that might contain circles
+            circles_section = message.content[theme_match.end():]
+            
+            # Extract all blue and yellow circles, ignoring other characters
+            all_circles = re.findall(r'[🔵🟡]', circles_section)
+            
+            if all_circles:
+                yellow_count = all_circles.count('🟡')
+                
+                # Valid Strands score must have exactly 1 yellow
+                if yellow_count == 1:
+                    await message.channel.send("Nice job solving today's strands!")
 
     # Check if bot is mentioned
     elif discord_client.user in message.mentions:
