@@ -293,10 +293,9 @@ async def on_message(message):
     ):
         circles = strands_scores[0]
         yellow_count = circles.count('🟡')
-        blue_count = circles.count('🔵')
         
-        # Valid Strands score must have exactly 5 blues and 1 yellow
-        if yellow_count == 1 and blue_count == 5:
+        # Valid Strands score must have exactly 1 yellow
+        if yellow_count == 1:
             await message.channel.send("Nice job solving today's strands!")
 
     # Check if bot is mentioned
