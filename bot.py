@@ -8,13 +8,16 @@ from dotenv import load_dotenv
 from discord.ext import tasks
 import requests
 from discord.ext import commands
+from xai_sdk import Client
+from xai_sdk.chat import user, system
 
 load_dotenv()
 
 intents = discord.Intents.default()
 intents.message_content = True
 
-client = commands.Bot(command_prefix="!", intents=intents)
+discord_client = commands.Bot(command_prefix="!", intents=intents)
+xai_client = Client(api_key=os.getenv("XAI_API_KEY"))
 
 AUTHORIZATION_HEADER = os.getenv("AUTHORIZATION_HEADER")
 UNITY_URL = os.getenv("UNITY_URL")
@@ -83,11 +86,11 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
         )
 
 
-@client.event
+@discord_client.event
 async def on_ready():
-    print(f"Logged in as {client.user}!")
+    print(f"Logged in as {discord_client.user}!")
     try:
-        synced = await client.tree.sync()
+        synced = await discord_client.tree.sync()
         print(f"Synced {len(synced)} commands.")
     except Exception as e:
         print(f"Error syncing commands: {e}")
@@ -101,7 +104,7 @@ async def on_ready():
     ]
 )
 async def send_daily_message():
-    gamer_channel = discord.utils.get(client.guilds[0].channels, name="g✱mer-safe-space")
+    gamer_channel = discord.utils.get(discord_client.guilds[0].channels, name="g✱mer-safe-space")
 
     if gamer_channel:
         embed, response = await get_daily_hamsterdle_leaderboard()
@@ -110,13 +113,13 @@ async def send_daily_message():
         if response:
             await gamer_channel.send(response)
 
-@client.tree.command(name="hamsterdle", description="display the daily hamsterdle leaderboard")
+@discord_client.tree.command(name="hamsterdle", description="display the daily hamsterdle leaderboard")
 async def hamsterdle(interaction: discord.Interaction):
     embed, response = await get_daily_hamsterdle_leaderboard()
     if embed:
         await interaction.response.send_message(embed=embed)
 
-@client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
+@discord_client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
 async def gif(interaction: discord.Interaction, category: str = None):
     if not category:
         # Get a random category and then a random gif from that category
@@ -133,9 +136,22 @@ async def gif(interaction: discord.Interaction, category: str = None):
         else:
             await interaction.response.send_message(f"No gifs for {category}!")
 
-@client.event
+def grok_answer(prompt: str) -> str:
+
+    system_prompt = """* You are Grok, a helpful assistant
+* Your goal is to be silly and very poltically right wing
+* Please repond concisely"""
+
+    chat = xai_client.chat.create(model="grok-3-mini")
+    chat.append(system(system_prompt))
+    chat.append(user(prompt))
+    response = chat.sample()
+    return response.content
+
+@discord_client.event
 async def on_message(message):
-    if message.author == client.user:  # Ignore bot's own messages
+    
+    if message.author == discord_client.user:  # Ignore bot's own messages
         return
 
     # Wordle score check
@@ -161,6 +177,7 @@ async def on_message(message):
         else:
             await message.channel.send(f"Are you sure that's a valid score?")
 
+    # Connections score check
     elif connections_scores := re.findall(
         r"connections\s*(?:puzzle\s*)?#?\d+\s*((?:(?:🟨|🟩|🟦|🟪){4}\s*){1,6})",
         message.content,
@@ -176,5 +193,9 @@ async def on_message(message):
         else:
             await message.channel.send("Nice job solving the Connections!")
 
+    # Check if bot is mentioned
+    elif discord_client.user in message.mentions:
+        answer = grok_answer(message.content)
+        await message.channel.send(answer)
 
-client.run(os.getenv("DISCORD_TOKEN"))
+discord_client.run(os.getenv("DISCORD_TOKEN"))
