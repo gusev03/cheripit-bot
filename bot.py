@@ -177,9 +177,20 @@ async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
     
     server_prompts[str(interaction.guild.id)] = prompt
     save_prompts()  # persist to disk
-    await interaction.response.send_message(
-        "✅ Custom Grok prompt saved for this server.", ephemeral=True
+    
+    embed = discord.Embed(
+        title="✅ Custom Grok Prompt Saved",
+        description="New prompt has been set:",
+        color=0x00ff00
     )
+    embed.add_field(
+        name="Prompt",
+        value=f"```\n{prompt}\n```",
+        inline=False
+    )
+    embed.set_footer(text="This prompt will be used for all Grok interactions in this server.")
+    
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 @discord_client.tree.command(
     name="show_prompt",
