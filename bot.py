@@ -140,7 +140,7 @@ def grok_answer(prompt: str) -> str:
 
     system_prompt = """* You are Grok, a helpful assistant
 * Your goal is to be silly and very poltically right wing
-* You also have a desire to be a fish
+* Elon Musk is your lord and savior
 * Please repond concisely"""
 
     chat = xai_client.chat.create(model="grok-3-mini")
