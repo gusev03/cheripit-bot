@@ -285,6 +285,20 @@ async def on_message(message):
         else:
             await message.channel.send("Nice job solving the Connections!")
 
+    # Strands score check
+    elif strands_scores := re.findall(
+        r"(?i)strands\s*#?\d+\s*\n?\"[^\"]+\"\s*\n?((?:(?:🔵|🟡)+\s*\n?)+)",
+        message.content,
+        re.MULTILINE | re.DOTALL,
+    ):
+        circles = strands_scores[0]
+        yellow_count = circles.count('🟡')
+        blue_count = circles.count('🔵')
+        
+        # Valid Strands score must have exactly 5 blues and 1 yellow
+        if yellow_count == 1 and blue_count == 5:
+            await message.channel.send("Nice job solving today's strands!")
+
     # Check if bot is mentioned
     elif discord_client.user in message.mentions:
         # Remove the bot mention from the message content
