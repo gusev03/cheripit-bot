@@ -295,10 +295,9 @@ async def on_message(message):
         yellow_count = circles.count('🟡')
         blue_count = circles.count('🔵')
         
-        if yellow_count > 0:
-            await message.channel.send("Nice work finding the spangram and solving Strands!")
-        else:
-            await message.channel.send("Great job working on Strands!")
+        # Valid Strands score must have exactly 5 blues and 1 yellow
+        if yellow_count == 1 and blue_count == 5:
+            await message.channel.send("Nice job solving today's strands!")
 
     # Check if bot is mentioned
     elif discord_client.user in message.mentions:
