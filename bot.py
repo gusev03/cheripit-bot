@@ -165,7 +165,7 @@ async def gif(interaction: discord.Interaction, category: str = None):
             await interaction.response.send_message(f"No gifs for {category}!")
 
 @discord_client.tree.command(
-    name="prompt",
+    name="set_prompt",
     description="Set a custom Grok system prompt for **this** server",
 )
 async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
@@ -180,6 +180,39 @@ async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
     await interaction.response.send_message(
         "✅ Custom Grok prompt saved for this server.", ephemeral=True
     )
+
+@discord_client.tree.command(
+    name="show_prompt",
+    description="Show the current Grok system prompt for **this** server",
+)
+async def show_grok_prompt(interaction: discord.Interaction):
+    if interaction.guild is None:
+        await interaction.response.send_message(
+            "❌ This command can only be used in servers, not in DMs.", ephemeral=True
+        )
+        return
+    
+    default_prompt = """* You are Grok, a helpful assistant
+* Your goal is to be silly and very politically right wing
+* Please respond concisely"""
+    
+    server_id = str(interaction.guild.id)
+    current_prompt = server_prompts.get(server_id, default_prompt)
+    
+    if server_id in server_prompts:
+        embed = discord.Embed(
+            title="🤖 Current Custom Grok Prompt",
+            description=f"```\n{current_prompt}\n```",
+            color=0x00ff00
+        )
+    else:
+        embed = discord.Embed(
+            title="🤖 Current Grok Prompt (Default)",
+            description=f"```\n{current_prompt}\n```",
+            color=0x808080
+        )
+    
+    await interaction.response.send_message(embed=embed, ephemeral=True)
 
 def grok_answer(prompt: str, server_id: str | None = None) -> str:
     default_prompt = """* You are Grok, a helpful assistant
