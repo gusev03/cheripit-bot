@@ -171,7 +171,7 @@ async def gif(interaction: discord.Interaction, category: str = None):
 async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
     if interaction.guild is None:
         await interaction.response.send_message(
-            "❌ This command can only be used in servers, not in DMs.", ephemeral=True
+            "❌ This command can only be used in servers, not in DMs."
         )
         return
     
@@ -190,7 +190,7 @@ async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
     )
     embed.set_footer(text="This prompt will be used for all Grok interactions in this server.")
     
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=embed)
 
 @discord_client.tree.command(
     name="show_prompt",
@@ -199,7 +199,7 @@ async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
 async def show_grok_prompt(interaction: discord.Interaction):
     if interaction.guild is None:
         await interaction.response.send_message(
-            "❌ This command can only be used in servers, not in DMs.", ephemeral=True
+            "❌ This command can only be used in servers, not in DMs."
         )
         return
     
@@ -223,7 +223,7 @@ async def show_grok_prompt(interaction: discord.Interaction):
             color=0x808080
         )
     
-    await interaction.response.send_message(embed=embed, ephemeral=True)
+    await interaction.response.send_message(embed=embed)
 
 def grok_answer(prompt: str, server_id: str | None = None) -> str:
     default_prompt = """* You are Grok, a helpful assistant
