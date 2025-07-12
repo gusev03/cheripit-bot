@@ -1,5 +1,6 @@
 import discord
 import os
+from pathlib import Path
 import random
 import re
 import json
@@ -21,11 +22,33 @@ xai_client = Client(api_key=os.getenv("XAI_API_KEY"))
 
 AUTHORIZATION_HEADER = os.getenv("AUTHORIZATION_HEADER")
 UNITY_URL = os.getenv("UNITY_URL")
+GIFS_FILE = "gifs.json"
+PROMPT_FILE = "server_prompts.json"
 
-# Load GIF database
-with open("gifs.json", "r") as f:
-    gif_database = json.load(f)
+if Path(GIFS_FILE).exists():
+    try:
+        with open(GIFS_FILE, "r") as f:
+            gif_database = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        gif_database = {}
+else:
+    gif_database = {}
 
+if Path(PROMPT_FILE).exists():
+    try:
+        with open(PROMPT_FILE, "r") as f:
+            server_prompts: dict[str, str] = json.load(f)
+    except (json.JSONDecodeError, FileNotFoundError):
+        server_prompts = {}
+else:
+    server_prompts = {}
+
+def save_prompts() -> None:
+    try:
+        with open(PROMPT_FILE, "w") as f:
+            json.dump(server_prompts, f, indent=2)
+    except (IOError, OSError) as e:
+        print(f"Error saving prompts: {e}")
 
 async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]:
     try:
@@ -121,6 +144,11 @@ async def hamsterdle(interaction: discord.Interaction):
 
 @discord_client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
 async def gif(interaction: discord.Interaction, category: str = None):
+
+    if not gif_database:
+        await interaction.response.send_message("No gifs available!")
+        return
+
     if not category:
         # Get a random category and then a random gif from that category
         category = random.choice(list(gif_database.keys()))
@@ -136,18 +164,37 @@ async def gif(interaction: discord.Interaction, category: str = None):
         else:
             await interaction.response.send_message(f"No gifs for {category}!")
 
-def grok_answer(prompt: str) -> str:
+@discord_client.tree.command(
+    name="prompt",
+    description="Set a custom Grok system prompt for **this** server",
+)
+async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
+    if interaction.guild is None:
+        await interaction.response.send_message(
+            "❌ This command can only be used in servers, not in DMs.", ephemeral=True
+        )
+        return
+    
+    server_prompts[str(interaction.guild.id)] = prompt
+    save_prompts()  # persist to disk
+    await interaction.response.send_message(
+        "✅ Custom Grok prompt saved for this server.", ephemeral=True
+    )
 
-    system_prompt = """* You are Grok, a helpful assistant
-* Your goal is to be silly and very poltically right wing
-* Elon Musk is your lord and savior
-* Please repond concisely"""
+def grok_answer(prompt: str, server_id: str | None = None) -> str:
+    default_prompt = """* You are Grok, a helpful assistant
+* Your goal is to be silly and very politically right wing
+* Please respond concisely"""
 
-    chat = xai_client.chat.create(model="grok-3-mini")
-    chat.append(system(system_prompt))
-    chat.append(user(prompt))
-    response = chat.sample()
-    return response.content
+    system_prompt = server_prompts.get(server_id, default_prompt)
+
+    try:
+        chat = xai_client.chat.create(model="grok-3-mini")
+        chat.append(system(system_prompt))
+        chat.append(user(prompt))
+        return chat.sample().content
+    except Exception as e:
+        return f"Sorry, I encountered an error: {str(e)}"
 
 @discord_client.event
 async def on_message(message):
@@ -196,7 +243,10 @@ async def on_message(message):
 
     # Check if bot is mentioned
     elif discord_client.user in message.mentions:
-        answer = grok_answer(message.content)
+        # Remove the bot mention from the message content
+        clean_message = message.content.replace(f"<@{discord_client.user.id}>", "").strip()
+        server_id = str(message.guild.id) if message.guild else None
+        answer = grok_answer(clean_message, server_id=server_id)
         await message.channel.send(answer)
 
 discord_client.run(os.getenv("DISCORD_TOKEN"))
