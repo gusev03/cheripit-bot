@@ -28,10 +28,10 @@ def test_wordle_processing():
     
     # Test valid cases
     for message, expected in wordle_valid:
-        response = process_wordle_message(message)
+        response = process_wordle_message(message, use_ai=False)
         assert response == expected, f"Expected '{expected}' for message: {message}"
     
     # Test invalid cases
     for message in wordle_invalid:
-        response = process_wordle_message(message)
+        response = process_wordle_message(message, use_ai=False)
         assert response is None, f"Should not match: {message}" 

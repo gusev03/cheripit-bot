@@ -1,6 +1,5 @@
 from game_scores import process_strands_message
 
-
 def test_strands_processing():
     """Test strands message processing with inline test data."""
     

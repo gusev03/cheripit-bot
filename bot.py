@@ -249,7 +249,7 @@ def grok_answer(prompt: str, server_id: str | None = None) -> str:
 async def on_message(message):
     if message.author == discord_client.user:  # Ignore bot's own messages
         return
-    elif response := process_wordle_message(message.content):
+    elif response := process_wordle_message(message.content, use_ai=True):
         await message.channel.send(response)
     elif response := process_connections_message(message.content):
         await message.channel.send(response)
