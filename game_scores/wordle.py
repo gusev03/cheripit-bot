@@ -8,6 +8,7 @@ from xai_sdk.chat import user, system
 load_dotenv()
 
 WORDLE_AI_ENABLED = os.getenv("WORDLE_AI_ENABLED") == "true"
+xai_client = Client(api_key=os.getenv("XAI_API_KEY"))
 
 def process_wordle_message(message: str, use_ai: bool = False) -> Optional[str]:
     """
@@ -73,7 +74,6 @@ def ai_wordle_response(message: str) -> str:
         Response message for the wordle score, None if error
     """
     try:
-        xai_client = Client(api_key=os.getenv("XAI_API_KEY"))
         system_prompt = """You are a friendly, slightly sassy bot that responds to people sharing their Wordle scores. 
 
 Wordle is a word guessing game where players have 6 attempts to guess a 5-letter word. Scores are typically shared like "Wordle 1,234 3/6" where the number before the slash is how many guesses it took (1-6), or "X" if they failed.
