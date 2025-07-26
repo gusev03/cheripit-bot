@@ -10,7 +10,7 @@ def test_connections_processing():
         ("connections #456\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟪", "Nice job solving the Connections!"),
         ("Connections puzzle 789 🟨🟨🟨🟨 🟩🟩🟩🟩 🟦🟦🟦🟦 🟪🟪🟪🟪", "Nice job solving the Connections!"),
         ("Connections #100\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟦🟦🟦🟦\n🟪🟪🟪🟨\n🟩🟦🟪🟨\n🟨🟩🟦🟪", "You lost! Better luck tomorrow!"),
-        ("Connections #500\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟦🟪🟨🟩\n🟪🟦🟨🟩\n🟨🟩🟦🟪\n🟪🟨🟩🟦", "You lost! Better luck tomorrow!"),
+        ("Connecions #500\n🟨🟨🟨🟨\n🟩🟩🟩🟩\n🟦🟪🟨🟩\n🟪🟦🟨🟩\n🟨🟩🟦🟪\n🟪🟨🟩🟦", "You lost! Better luck tomorrow!"),
     ]
     
     connections_invalid = [
