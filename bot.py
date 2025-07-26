@@ -11,6 +11,11 @@ import requests
 from discord.ext import commands
 from xai_sdk import Client
 from xai_sdk.chat import user, system
+from game_scores import (
+    process_wordle_message,
+    process_connections_message,
+    process_strands_message,
+)
 
 load_dotenv()
 
@@ -242,63 +247,14 @@ def grok_answer(prompt: str, server_id: str | None = None) -> str:
 
 @discord_client.event
 async def on_message(message):
-    
     if message.author == discord_client.user:  # Ignore bot's own messages
         return
-
-    # Wordle score check
-    if wordle_scores := re.findall(
-        r"(?i)wordle\s+\d+(?:,\d+)?\s+([0-6X])(?=/6\*?)", message.content
-    ):
-        score = wordle_scores[0]
-
-        if score == "X":
-            await message.channel.send("You lost! ;(")
-        elif score == "1":
-            await message.channel.send("You totally looked up the answer!")
-        elif score == "2":
-            await message.channel.send("Yeeeesh what a score!")
-        elif score == "3":
-            await message.channel.send("Good score!")
-        elif score == "4":
-            await message.channel.send("Decent score!")
-        elif score == "5":
-            await message.channel.send("I think we can do better tomorrow!")
-        elif score == "6":
-            await message.channel.send("That was a close one!")
-        else:
-            await message.channel.send(f"Are you sure that's a valid score?")
-
-    # Connections score check
-    elif connections_scores := re.findall(
-        r"connections\s*(?:puzzle\s*)?#?\d+\s*((?:(?:🟨|🟩|🟦|🟪){4}\s*){1,6})",
-        message.content,
-        re.IGNORECASE,
-    ):
-        rows = connections_scores[0].strip().split()
-        is_loss = (
-            len(rows) == 6 and len(set(rows[-1])) > 1
-        )  # Check if last row has different colors
-
-        if is_loss:
-            await message.channel.send("You lost! Better luck tomorrow!")
-        else:
-            await message.channel.send("Nice job solving the Connections!")
-
-    # Strands score check
-    elif strands_scores := re.findall(
-        r"(?i)strands\s*#?\d+\s*\n?\"[^\"]+\"\s*\n?((?:(?:🔵|🟡)+\s*\n?)+)",
-        message.content,
-        re.MULTILINE | re.DOTALL,
-    ):
-        circles = strands_scores[0]
-        yellow_count = circles.count('🟡')
-        
-        # Valid Strands score must have exactly 1 yellow
-        if yellow_count == 1:
-            await message.channel.send("Nice job solving today's strands!")
-
-    # Check if bot is mentioned
+    elif response := process_wordle_message(message.content):
+        await message.channel.send(response)
+    elif response := process_connections_message(message.content):
+        await message.channel.send(response)
+    elif response := process_strands_message(message.content):
+        await message.channel.send(response)
     elif discord_client.user in message.mentions:
         # Remove the bot mention from the message content
         clean_message = message.content.replace(f"<@{discord_client.user.id}>", "").strip()

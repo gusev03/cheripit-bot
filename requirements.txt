@@ -3,3 +3,4 @@ python-dotenv
 audioop-lts
 requests
 xai-sdk
+pytest
