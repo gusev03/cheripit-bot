@@ -65,7 +65,7 @@ def basic_wordle_response(score: str) -> Optional[str]:
 
 def ai_wordle_response(message: str) -> str:
     """
-    Generate a response for a wordle score using an LLM (grok-3-mini).
+    Generate a response for a wordle score using an LLM (grok-4-1-fast-reasoning).
     
     Args:
         message: The message text to process
@@ -102,7 +102,7 @@ Examples of good responses:
 - For X/6: "Ouch! Tomorrow's a new day 😅"
 
 Respond to the Wordle score in the message with a brief, engaging comment."""
-        chat = xai_client.chat.create(model="grok-3-mini")
+        chat = xai_client.chat.create(model="grok-4-1-fast-reasoning")
         chat.append(system(system_prompt))
         chat.append(user(message))
         return chat.sample().content

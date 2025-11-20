@@ -238,7 +238,7 @@ def grok_answer(prompt: str, server_id: str | None = None) -> str:
     system_prompt = server_prompts.get(server_id, default_prompt)
 
     try:
-        chat = xai_client.chat.create(model="grok-3-mini")
+        chat = xai_client.chat.create(model="grok-4-1-fast-reasoning")
         chat.append(system(system_prompt))
         chat.append(user(prompt))
         return chat.sample().content
