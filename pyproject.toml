@@ -1,6 +1,6 @@
 [project]
-name = "brain-rot-bot"
+name = "cheripit-bot"
 version = "0.1.0"
-description = "Add your description here"
+description = "A discord bot for the CheriPit server"
 requires-python = ">=3.14"
 dependencies = []
