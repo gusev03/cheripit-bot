@@ -9,7 +9,8 @@ dependencies = [
     "audioop-lts==0.2.2",
     "requests==2.32.5",
     "xai-sdk==1.4.1",
-    "SQLAlchemy==2.0.44",
+    "SQLAlchemy[asyncio]==2.0.44",
+    "asyncpg==0.30.0",
 ]
 
 [tool.uv]
