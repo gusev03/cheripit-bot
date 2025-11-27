@@ -33,7 +33,7 @@ jobs:
       env:
         XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
       run: |
-        uv run pytest
+        uv run python -m pytest
 
   deploy:
     needs: build
