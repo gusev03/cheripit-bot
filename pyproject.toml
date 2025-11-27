@@ -1,0 +1,19 @@
+[project]
+name = "cheripit-bot"
+version = "0.2.0"
+description = "A discord bot for the CheriPit server"
+requires-python = ">=3.14"
+dependencies = [
+    "discord.py==2.6.4",
+    "python-dotenv==1.2.1",
+    "audioop-lts==0.2.2",
+    "requests==2.32.5",
+    "xai-sdk==1.4.1",
+    "SQLAlchemy[asyncio]==2.0.44",
+    "asyncpg==0.30.0",
+]
+
+[tool.uv]
+dev-dependencies = [
+    "pytest==9.0.1",
+]

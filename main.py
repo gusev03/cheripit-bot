@@ -16,6 +16,7 @@ from game_scores import (
     process_connections_message,
     process_strands_message,
 )
+from database import init_db, log_message, upsert_server_prompt, get_server_prompt, ActionType
 
 load_dotenv()
 
@@ -28,7 +29,10 @@ xai_client = Client(api_key=os.getenv("XAI_API_KEY"))
 AUTHORIZATION_HEADER = os.getenv("AUTHORIZATION_HEADER")
 UNITY_URL = os.getenv("UNITY_URL")
 GIFS_FILE = "gifs.json"
-PROMPT_FILE = "server_prompts.json"
+
+DEFAULT_PROMPT = """* You are Grok, a helpful assistant
+* Your goal is to be silly and very politically right wing
+* Please respond concisely"""
 
 if Path(GIFS_FILE).exists():
     try:
@@ -38,22 +42,6 @@ if Path(GIFS_FILE).exists():
         gif_database = {}
 else:
     gif_database = {}
-
-if Path(PROMPT_FILE).exists():
-    try:
-        with open(PROMPT_FILE, "r") as f:
-            server_prompts: dict[str, str] = json.load(f)
-    except (json.JSONDecodeError, FileNotFoundError):
-        server_prompts = {}
-else:
-    server_prompts = {}
-
-def save_prompts() -> None:
-    try:
-        with open(PROMPT_FILE, "w") as f:
-            json.dump(server_prompts, f, indent=2)
-    except (IOError, OSError) as e:
-        print(f"Error saving prompts: {e}")
 
 async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]:
     try:
@@ -117,6 +105,7 @@ async def get_daily_hamsterdle_leaderboard() -> tuple[discord.Embed | None, str]
 @discord_client.event
 async def on_ready():
     print(f"Logged in as {discord_client.user}!")
+    await init_db()
     try:
         synced = await discord_client.tree.sync()
         print(f"Synced {len(synced)} commands.")
@@ -146,15 +135,30 @@ async def hamsterdle(interaction: discord.Interaction):
     embed, response = await get_daily_hamsterdle_leaderboard()
     if embed:
         await interaction.response.send_message(embed=embed)
+    
+    # Log the command to database
+    if interaction.guild:
+        await log_message(
+            guild_id=interaction.guild.id,
+            guild_name=interaction.guild.name,
+            channel_id=interaction.channel.id,
+            channel_name=interaction.channel.name,
+            user_id=interaction.user.id,
+            user_name=interaction.user.name,
+            user_display_name=interaction.user.display_name,
+            action_type=ActionType.HAMSTERDLE,
+            user_message=None,
+            bot_response=response,
+        )
 
 @discord_client.tree.command(name="gif", description="display a random gif, optionally from a specific category")
 async def gif(interaction: discord.Interaction, category: str = None):
-
+    gif_to_send = None
+    
     if not gif_database:
         await interaction.response.send_message("No gifs available!")
-        return
-
-    if not category:
+        gif_to_send = "No gifs available!"
+    elif not category:
         # Get a random category and then a random gif from that category
         category = random.choice(list(gif_database.keys()))
         gif_to_send = random.choice(gif_database[category])
@@ -167,7 +171,23 @@ async def gif(interaction: discord.Interaction, category: str = None):
             gif_to_send = random.choice(gif_database[category])
             await interaction.response.send_message(gif_to_send)
         else:
-            await interaction.response.send_message(f"No gifs for {category}!")
+            gif_to_send = f"No gifs for {category}!"
+            await interaction.response.send_message(gif_to_send)
+    
+    # Log the command to database
+    if interaction.guild:
+        await log_message(
+            guild_id=interaction.guild.id,
+            guild_name=interaction.guild.name,
+            channel_id=interaction.channel.id,
+            channel_name=interaction.channel.name,
+            user_id=interaction.user.id,
+            user_name=interaction.user.name,
+            user_display_name=interaction.user.display_name,
+            action_type=ActionType.GIF,
+            user_message=category,
+            bot_response=gif_to_send,
+        )
 
 @discord_client.tree.command(
     name="set_prompt",
@@ -180,22 +200,50 @@ async def set_grok_prompt(interaction: discord.Interaction, *, prompt: str):
         )
         return
     
-    server_prompts[str(interaction.guild.id)] = prompt
-    save_prompts()  # persist to disk
+    # Save to database
+    success = await upsert_server_prompt(
+        guild_id=interaction.guild.id,
+        guild_name=interaction.guild.name,
+        user_id=interaction.user.id,
+        user_name=interaction.user.name,
+        user_display_name=interaction.user.display_name,
+        system_prompt=prompt,
+    )
     
-    embed = discord.Embed(
-        title="✅ Custom Grok Prompt Saved",
-        description="New prompt has been set:",
-        color=0x00ff00
-    )
-    embed.add_field(
-        name="Prompt",
-        value=f"```\n{prompt}\n```",
-        inline=False
-    )
-    embed.set_footer(text="This prompt will be used for all Grok interactions in this server.")
+    if success:
+        embed = discord.Embed(
+            title="✅ Custom Grok Prompt Saved",
+            description="New prompt has been set:",
+            color=0x00ff00
+        )
+        embed.add_field(
+            name="Prompt",
+            value=f"```\n{prompt}\n```",
+            inline=False
+        )
+        embed.set_footer(text="This prompt will be used for all Grok interactions in this server.")
+    else:
+        embed = discord.Embed(
+            title="⚠️ Prompt Saved (Database Error)",
+            description="The prompt was set but there was an error saving to the database.",
+            color=0xffaa00
+        )
     
     await interaction.response.send_message(embed=embed)
+    
+    # Log the command to database
+    await log_message(
+        guild_id=interaction.guild.id,
+        guild_name=interaction.guild.name,
+        channel_id=interaction.channel.id,
+        channel_name=interaction.channel.name,
+        user_id=interaction.user.id,
+        user_name=interaction.user.name,
+        user_display_name=interaction.user.display_name,
+        action_type=ActionType.SET_PROMPT,
+        user_message=prompt,
+        bot_response="Prompt saved" if success else "Database error",
+    )
 
 @discord_client.tree.command(
     name="show_prompt",
@@ -208,14 +256,10 @@ async def show_grok_prompt(interaction: discord.Interaction):
         )
         return
     
-    default_prompt = """* You are Grok, a helpful assistant
-* Your goal is to be silly and very politically right wing
-* Please respond concisely"""
+    # Get prompt from database
+    current_prompt = await get_server_prompt(interaction.guild.id)
     
-    server_id = str(interaction.guild.id)
-    current_prompt = server_prompts.get(server_id, default_prompt)
-    
-    if server_id in server_prompts:
+    if current_prompt:
         embed = discord.Embed(
             title="🤖 Current Custom Grok Prompt",
             description=f"```\n{current_prompt}\n```",
@@ -224,18 +268,34 @@ async def show_grok_prompt(interaction: discord.Interaction):
     else:
         embed = discord.Embed(
             title="🤖 Current Grok Prompt (Default)",
-            description=f"```\n{current_prompt}\n```",
+            description=f"```\n{DEFAULT_PROMPT}\n```",
             color=0x808080
         )
+        current_prompt = DEFAULT_PROMPT
     
     await interaction.response.send_message(embed=embed)
+    
+    # Log the command to database
+    await log_message(
+        guild_id=interaction.guild.id,
+        guild_name=interaction.guild.name,
+        channel_id=interaction.channel.id,
+        channel_name=interaction.channel.name,
+        user_id=interaction.user.id,
+        user_name=interaction.user.name,
+        user_display_name=interaction.user.display_name,
+        action_type=ActionType.SHOW_PROMPT,
+        user_message=None,
+        bot_response=current_prompt,
+    )
 
-def grok_answer(prompt: str, server_id: str | None = None) -> str:
-    default_prompt = """* You are Grok, a helpful assistant
-* Your goal is to be silly and very politically right wing
-* Please respond concisely"""
-
-    system_prompt = server_prompts.get(server_id, default_prompt)
+async def grok_answer(prompt: str, server_id: int | None = None) -> str:
+    # Get custom prompt from database, fall back to default
+    system_prompt = DEFAULT_PROMPT
+    if server_id:
+        custom_prompt = await get_server_prompt(server_id)
+        if custom_prompt:
+            system_prompt = custom_prompt
 
     try:
         chat = xai_client.chat.create(model="grok-4-1-fast-reasoning")
@@ -249,17 +309,38 @@ def grok_answer(prompt: str, server_id: str | None = None) -> str:
 async def on_message(message):
     if message.author == discord_client.user:  # Ignore bot's own messages
         return
-    elif response := process_wordle_message(message.content, use_ai=True):
+    
+    # Helper to log messages to the database
+    async def log_to_db(action: ActionType, response: str):
+        if message.guild:
+            await log_message(
+                guild_id=message.guild.id,
+                guild_name=message.guild.name,
+                channel_id=message.channel.id,
+                channel_name=message.channel.name,
+                user_id=message.author.id,
+                user_name=message.author.name,
+                user_display_name=message.author.display_name,
+                action_type=action,
+                user_message=message.content,
+                bot_response=response,
+            )
+    
+    if response := process_wordle_message(message.content, use_ai=True):
         await message.channel.send(response)
+        await log_to_db(ActionType.WORDLE, response)
     elif response := process_connections_message(message.content):
         await message.channel.send(response)
+        await log_to_db(ActionType.CONNECTIONS, response)
     elif response := process_strands_message(message.content):
         await message.channel.send(response)
+        await log_to_db(ActionType.STRANDS, response)
     elif discord_client.user in message.mentions:
         # Remove the bot mention from the message content
         clean_message = message.content.replace(f"<@{discord_client.user.id}>", "").strip()
-        server_id = str(message.guild.id) if message.guild else None
-        answer = grok_answer(clean_message, server_id=server_id)
+        server_id = message.guild.id if message.guild else None
+        answer = await grok_answer(clean_message, server_id=server_id)
         await message.channel.send(answer)
+        await log_to_db(ActionType.MENTION, answer)
 
 discord_client.run(os.getenv("DISCORD_TOKEN"))
